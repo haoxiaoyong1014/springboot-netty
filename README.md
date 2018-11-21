@@ -134,11 +134,16 @@ public class HeartBeatServer {
 ```
 **对上面代码进行简要说明**
 (1),NioEventLoopGroup是一个处理I / O操作的多线程事件循环。 Netty为不同类型的传输提供各种EventLoopGroup实现。我们在此示例中实现了服务器端应用程序，因此将使用两个NioEventLoopGroup。第一个，通常称为“老板”，接受传入连接。第二个，通常称为“工人”，一旦老板接受连接并将接受的连接注册到工作人员，就处理被接受连接的流量。使用了多少个线程以及它们如何映射到创建的Channels取决于EventLoopGroup实现，甚至可以通过构造函数进行配置。
+
 (2),ServerBootstrap是一个设置服务器的帮助程序类。
+
 (3), 在这里，我们指定使用`NioServerSocketChannel`类，该类用于实例化新的Channel以接受传入的连接。
+
 (4),保持长连接
+
 (5), childHandler()方法需要一个ChannelInitializer类,ChannelInitializer是一个特殊的处理程序，旨在帮助用户配置新的Channel,您最有可能希望通过添加一些处理程序（如DiscardServerHandler）来配置新Channel的ChannelPipeline，以实现您的网络应用程序。 随着应用程序变得复杂，您可能会向管道添加更多处理程序，并最终将此匿名类提取到顶级类中。
 这里我们用HeartbeatInitializer类继承了ChannelInitializer类并重写了initChannel()方法
+
 ```java
 public class HeartbeatInitializer extends ChannelInitializer<Channel> {
     @Override
@@ -152,9 +157,13 @@ public class HeartbeatInitializer extends ChannelInitializer<Channel> {
 }
 ```
 (6).绑定到端口并启动服务器。
+
 (7).当程序关闭时优雅的关闭 Neety
+
 (8).将IdleStateHandler 添加到 ChannelPipeline 中，也会有一个定时任务，每5秒校验一次是否有收到消息，否则就主动发送一次请求。
+
 (9),服务端解码器,服务端与客户端采用的是自定义的 POJO 进行通讯的,所以需要在客户端进行编码，服务端进行解码，也都只需要各自实现一个编解码器即可。(下面也会说到)
+
 ```java
 public class HeartbeatDecoder extends ByteToMessageDecoder {
     @Override
@@ -307,10 +316,15 @@ public class HeartbeatClient {
 ```
 **对上面代码进行简要说明:**
 Netty中服务器和客户端之间最大和唯一的区别是使用了不同的Bootstrap和Channel实现。
+
 (1),如果只指定一个EventLoopGroup，它将同时用作boss组和worker组。 但是，老板工作者不会用于客户端。
+
 (2),Bootstrap(客户端使用)类似于ServerBootstrap(服务端使用)，不同之处在于它适用于非服务器通道
+
 (3),NioSocketChannel用于创建客户端通道，而不是NioServerSocketChannel(服务端)
+
 (4),客户端handler()方法与服务端childHandler()同样都是需要一个ChannelInitializer类,ChannelInitializer是一个特殊的处理程序,这里用CustomerHandleInitializer继承了ChannelInitializer
+
 ```java
 public class CustomerHandleInitializer extends ChannelInitializer<Channel> {
     @Override
@@ -324,8 +338,11 @@ public class CustomerHandleInitializer extends ChannelInitializer<Channel> {
 }
 ```
 (5),我们这里应该调用connect()方法而不是bind()方法。
+
 (6),客户端的心跳其实也是类似，也需要在 ChannelPipeline 中添加一个 IdleStateHandler 
+
 (7),客户端编码器
+
 ```java
 public class HeartbeatEncode extends MessageToByteEncoder<CustomProtocol> {
     @Override
